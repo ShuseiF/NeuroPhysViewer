@@ -1,3 +1,8 @@
+# io.R
+# Functions for reading LabChart-exported text files.
+# Returns a data frame with columns:
+# Time, Unit, MT, TTL
+
 library(data.table)
 
 read_labchart_txt <- function(file){
