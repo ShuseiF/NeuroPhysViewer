@@ -14,7 +14,9 @@ server <- function(input, output, session){
     
     req(waveform())
     
-    plot_waveform(waveform())
+    plot_waveform(
+      waveform()$waveform
+    )
     
   })
   
