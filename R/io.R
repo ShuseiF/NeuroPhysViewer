@@ -19,10 +19,17 @@ read_labchart_txt <- function(file){
   
   dat_lines <- lines[-(1:6)]
   
-  waveform <- vector("list", length(dat_lines))
-  labels <- list()
+  n <- length(dat_lines)
+  
+  Time <- numeric(n)
+  Unit <- numeric(n)
+  MT   <- numeric(n)
+  TTL  <- numeric(n)
+  
+  labels <- vector("list", 100)
   
   j <- 1
+  k <- 1
   
   for(i in seq_along(dat_lines)){
     
@@ -31,27 +38,23 @@ read_labchart_txt <- function(file){
     if(length(x) < 4)
       next
     
-    waveform[[j]] <- data.frame(
-      
-      Time = as.numeric(x[1]),
-      Unit = as.numeric(x[2]),
-      MT   = as.numeric(x[3]),
-      TTL  = as.numeric(x[4]),
-      
-      stringsAsFactors = FALSE
-      
-    )
+    Time[j] <- as.numeric(x[1])
+    Unit[j] <- as.numeric(x[2])
+    MT[j]   <- as.numeric(x[3])
+    TTL[j]  <- as.numeric(x[4])
     
     if(length(x) >= 5){
       
-      labels[[length(labels)+1]] <- data.frame(
+      labels[[k]] <- data.frame(
         
-        Time = as.numeric(x[1]),
-        Label = paste(x[5:length(x)], collapse=" "),
+        Time = Time[j],
+        Label = paste(x[5:length(x)], collapse = " "),
         
         stringsAsFactors = FALSE
         
       )
+      
+      k <- k + 1
       
     }
     
@@ -59,7 +62,16 @@ read_labchart_txt <- function(file){
     
   }
   
-  waveform <- do.call(rbind, waveform)
+  waveform <- data.frame(
+    
+    Time = Time[1:(j-1)],
+    Unit = Unit[1:(j-1)],
+    MT   = MT[1:(j-1)],
+    TTL  = TTL[1:(j-1)]
+    
+  )
+  
+  labels <- labels[1:(k-1)]
   
   if(length(labels)>0){
     

@@ -8,7 +8,7 @@ plot_waveform <- function(df){
       df,
       x = ~Time,
       y = ~Unit,
-      type = "scatter",
+      type = "scattergl",
       mode = "lines",
       name = "Unit",
       line = list(width = 1)
@@ -18,7 +18,7 @@ plot_waveform <- function(df){
       df,
       x = ~Time,
       y = ~MT,
-      type = "scatter",
+      type = "scattergl",
       mode = "lines",
       name = "MT",
       line = list(width = 1)
@@ -28,7 +28,7 @@ plot_waveform <- function(df){
       df,
       x = ~Time,
       y = ~TTL,
-      type = "scatter",
+      type = "scattergl",
       mode = "lines",
       name = "TTL",
       line = list(width = 1)
