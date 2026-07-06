@@ -1,30 +1,23 @@
 ui <- fluidPage(
   
-  titlePanel("NeuroPhysViewer v0.6"),
+  titlePanel("NeuroPhysViewer v0.6.6"),
   
   sidebarLayout(
     
     sidebarPanel(
       
-      fileInput(
-        inputId = "file",
-        label = "LabChart TXT file",
-        accept = c(".txt")
-      ),
+      fileInput("file", "LabChart TXT file", accept = c(".txt")),
       
-      checkboxInput(
-        inputId = "show_ttl",
-        label = "Show TTL",
-        value = TRUE
-      ),
+      checkboxInput("show_ttl", "Show TTL", value = TRUE),
       
       hr(),
-      
       h4("Spike Detection"),
       
+      checkboxInput("show_spikes", "Show detected spikes", value = TRUE),
+      
       numericInput(
-        inputId = "spike_threshold",
-        label = "Spike threshold",
+        "spike_threshold",
+        "Spike threshold",
         value = -0.50,
         min = -100,
         max = 100,
@@ -32,49 +25,56 @@ ui <- fluidPage(
       ),
       
       selectInput(
-        inputId = "spike_polarity",
-        label = "Spike polarity",
+        "spike_polarity",
+        "Spike polarity",
         choices = c("negative", "positive"),
         selected = "negative"
       ),
       
       hr(),
+      h4("Review Window"),
       
+      numericInput(
+        "review_start",
+        "Review start (s)",
+        value = 1.000,
+        min = 0,
+        step = 0.001
+      ),
+      
+      numericInput(
+        "review_width",
+        "Review width (ms)",
+        value = 30,
+        min = 5,
+        max = 500,
+        step = 1
+      ),
+      
+      actionButton("review_prev", "← Previous"),
+      actionButton("review_next", "Next →"),
+      
+      hr(),
       h4("Analysis Window"),
       
-      numericInput(
-        inputId = "raster_start",
-        label = "Start time (s)",
-        value = -0.05,
-        step = 0.01
-      ),
-      
-      numericInput(
-        inputId = "raster_end",
-        label = "End time (s)",
-        value = 0.20,
-        step = 0.01
-      ),
-      
-      numericInput(
-        inputId = "psth_bin",
-        label = "PSTH bin width (s)",
-        value = 0.005,
-        min = 0.001,
-        max = 0.1,
-        step = 0.001
-      )
+      numericInput("raster_start", "Start time (s)", value = -0.05, step = 0.01),
+      numericInput("raster_end", "End time (s)", value = 0.20, step = 0.01),
+      numericInput("psth_bin", "PSTH bin width (s)", value = 0.005, min = 0.001, max = 0.1, step = 0.001)
     ),
     
     mainPanel(
       
-      plotly::plotlyOutput("plot", height = "600px"),
+      h3("Whole Recording"),
+      plotly::plotlyOutput("plot", height = "450px"),
+      
+      h3("Review Window"),
+      plotly::plotlyOutput("review_plot", height = "300px"),
       
       h3("Raster Plot"),
-      plotly::plotlyOutput("raster_plot", height = "350px"),
+      plotly::plotlyOutput("raster_plot", height = "300px"),
       
       h3("PSTH"),
-      plotly::plotlyOutput("psth_plot", height = "300px"),
+      plotly::plotlyOutput("psth_plot", height = "250px"),
       
       h3("TTL Detection"),
       DT::dataTableOutput("ttl_table")

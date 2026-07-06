@@ -1,5 +1,15 @@
 server <- function(input, output, session){
   
+  observeEvent(input$review_prev, {
+    new_start <- max(0, input$review_start - input$review_width / 1000)
+    updateNumericInput(session, "review_start", value = new_start)
+  })
+  
+  observeEvent(input$review_next, {
+    new_start <- input$review_start + input$review_width / 1000
+    updateNumericInput(session, "review_start", value = new_start)
+  })
+  
   file_data <- reactive({
     req(input$file)
     
@@ -19,6 +29,25 @@ server <- function(input, output, session){
       ttl_display = ttl_display
     )
   })
+  
+  observeEvent(file_data(), {
+    
+    x <- file_data()
+    
+    if(nrow(x$ttl) > 0){
+      start_time <- x$ttl$Onset[1] - input$review_width / 2000
+    } else {
+      start_time <- min(x$waveform$Time, na.rm = TRUE)
+    }
+    
+    start_time <- max(min(x$waveform$Time, na.rm = TRUE), start_time)
+    
+    updateNumericInput(
+      session,
+      "review_start",
+      value = round(start_time, 4)
+    )
+  }, once = TRUE)
   
   spike_data <- reactive({
     x <- file_data()
@@ -58,11 +87,30 @@ server <- function(input, output, session){
   
   output$plot <- plotly::renderPlotly({
     x <- file_data()
+    spikes <- spike_data()
     
     plot_waveform(
       df = x$waveform,
       ttl = x$ttl,
-      show_ttl = input$show_ttl
+      spikes = spikes,
+      show_ttl = input$show_ttl,
+      show_spikes = input$show_spikes
+    )
+  })
+  
+  output$review_plot <- plotly::renderPlotly({
+    x <- file_data()
+    spikes <- spike_data()
+    
+    plot_review_window(
+      df = x$waveform,
+      ttl = x$ttl,
+      spikes = spikes,
+      threshold = input$spike_threshold,
+      review_start = input$review_start,
+      review_width_ms = input$review_width,
+      show_ttl = input$show_ttl,
+      show_spikes = input$show_spikes
     )
   })
   

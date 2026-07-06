@@ -23,21 +23,55 @@ add_ttl_lines <- function(p, ttl, y_min, y_max){
   )
 }
 
-plot_waveform <- function(df, ttl = NULL, show_ttl = TRUE){
+plot_waveform <- function(df,
+                          ttl = NULL,
+                          spikes = NULL,
+                          show_ttl = TRUE,
+                          show_spikes = TRUE){
   
   df_plot <- downsample_df(df, max_points = 5000)
   
-  p_unit <- plot_ly(df_plot, x = ~Time, y = ~Unit,
-                    type = "scattergl", mode = "lines",
-                    name = "Unit", line = list(width = 1))
+  p_unit <- plot_ly(
+    df_plot,
+    x = ~Time,
+    y = ~Unit,
+    type = "scattergl",
+    mode = "lines",
+    name = "Unit",
+    line = list(width = 1)
+  )
   
-  p_mt <- plot_ly(df_plot, x = ~Time, y = ~MT,
-                  type = "scattergl", mode = "lines",
-                  name = "MT", line = list(width = 1))
+  if(show_spikes && !is.null(spikes) && nrow(spikes) > 0){
+    p_unit <- p_unit |>
+      add_markers(
+        data = spikes,
+        x = ~SpikeTime,
+        y = ~SpikeValue,
+        marker = list(size = 6, symbol = "triangle-up"),
+        name = "Detected spikes",
+        inherit = FALSE
+      )
+  }
   
-  p_ttl <- plot_ly(df_plot, x = ~Time, y = ~TTL,
-                   type = "scattergl", mode = "lines",
-                   name = "TTL", line = list(width = 1))
+  p_mt <- plot_ly(
+    df_plot,
+    x = ~Time,
+    y = ~MT,
+    type = "scattergl",
+    mode = "lines",
+    name = "MT",
+    line = list(width = 1)
+  )
+  
+  p_ttl <- plot_ly(
+    df_plot,
+    x = ~Time,
+    y = ~TTL,
+    type = "scattergl",
+    mode = "lines",
+    name = "TTL",
+    line = list(width = 1)
+  )
   
   if(show_ttl){
     p_unit <- add_ttl_lines(p_unit, ttl, min(df_plot$Unit, na.rm = TRUE), max(df_plot$Unit, na.rm = TRUE))
@@ -45,10 +79,158 @@ plot_waveform <- function(df, ttl = NULL, show_ttl = TRUE){
     p_ttl  <- add_ttl_lines(p_ttl, ttl, min(df_plot$TTL, na.rm = TRUE), max(df_plot$TTL, na.rm = TRUE))
   }
   
-  subplot(p_unit, p_mt, p_ttl, nrows = 3, shareX = TRUE, titleY = TRUE) |>
-    layout(showlegend = FALSE, xaxis3 = list(title = "Time (s)"))
+  subplot(
+    p_unit,
+    p_mt,
+    p_ttl,
+    nrows = 3,
+    shareX = TRUE,
+    titleY = TRUE
+  ) |>
+    layout(
+      showlegend = FALSE,
+      xaxis3 = list(title = "Time (s)")
+    )
 }
 
+plot_review_window <- function(df,
+                               ttl = NULL,
+                               spikes = NULL,
+                               threshold = NULL,
+                               review_start = 1.0,
+                               review_width_ms = 30,
+                               show_ttl = TRUE,
+                               show_spikes = TRUE){
+  
+  review_end <- review_start + review_width_ms / 1000
+  
+  idx <- which(df$Time >= review_start & df$Time <= review_end)
+  
+  if(length(idx) == 0){
+    return(
+      plot_ly() |>
+        layout(
+          title = paste0(
+            "No waveform data. Data range = ",
+            round(min(df$Time, na.rm = TRUE), 4),
+            " - ",
+            round(max(df$Time, na.rm = TRUE), 4),
+            " s / Review = ",
+            round(review_start, 4),
+            " - ",
+            round(review_end, 4),
+            " s"
+          ),
+          xaxis = list(title = "Time (s)", range = c(review_start, review_end)),
+          yaxis = list(title = "Unit")
+        )
+    )
+  }
+  
+  df_review <- df[idx, , drop = FALSE]
+  
+  spikes_review <- data.frame()
+  if(!is.null(spikes) && nrow(spikes) > 0){
+    sidx <- which(spikes$SpikeTime >= review_start & spikes$SpikeTime <= review_end)
+    if(length(sidx) > 0){
+      spikes_review <- spikes[sidx, , drop = FALSE]
+    }
+  }
+  
+  ttl_review <- data.frame()
+  if(!is.null(ttl) && nrow(ttl) > 0){
+    tidx <- which(ttl$Onset >= review_start & ttl$Onset <= review_end)
+    if(length(tidx) > 0){
+      ttl_review <- ttl[tidx, , drop = FALSE]
+    }
+  }
+  
+  y_values <- df_review$Unit
+  
+  if(!is.null(threshold)){
+    y_values <- c(y_values, threshold)
+  }
+  
+  if(nrow(spikes_review) > 0){
+    y_values <- c(y_values, spikes_review$SpikeValue)
+  }
+  
+  y_min <- min(y_values, na.rm = TRUE)
+  y_max <- max(y_values, na.rm = TRUE)
+  y_pad <- (y_max - y_min) * 0.2
+  
+  if(!is.finite(y_pad) || y_pad == 0){
+    y_pad <- 1
+  }
+  
+  p <- plot_ly(
+    data = df_review,
+    x = ~Time,
+    y = ~Unit,
+    type = "scatter",
+    mode = "lines",
+    line = list(width = 1),
+    showlegend = FALSE
+  )
+  
+  p <- p |>
+    add_segments(
+      x = review_start,
+      xend = review_end,
+      y = threshold,
+      yend = threshold,
+      inherit = FALSE,
+      line = list(color = "orange", width = 1, dash = "dash"),
+      showlegend = FALSE
+    )
+  
+  if(show_ttl && nrow(ttl_review) > 0){
+    p <- p |>
+      add_segments(
+        data = ttl_review,
+        x = ~Onset,
+        xend = ~Onset,
+        y = y_min - y_pad,
+        yend = y_max + y_pad,
+        inherit = FALSE,
+        line = list(color = "red", width = 1),
+        showlegend = FALSE
+      )
+  }
+  
+  if(show_spikes && nrow(spikes_review) > 0){
+    p <- p |>
+      add_markers(
+        data = spikes_review,
+        x = ~SpikeTime,
+        y = ~SpikeValue,
+        inherit = FALSE,
+        marker = list(size = 9, symbol = "triangle-up"),
+        showlegend = FALSE
+      )
+  }
+  
+  p |>
+    layout(
+      title = paste0(
+        "Review Window: ",
+        round(review_start, 4),
+        " - ",
+        round(review_end, 4),
+        " s"
+      ),
+      showlegend = FALSE,
+      xaxis = list(
+        title = "Time (s)",
+        range = c(review_start, review_end)
+      ),
+      yaxis = list(
+        title = "Unit",
+        range = c(y_min - y_pad, y_max + y_pad)
+      )
+    )
+}
+  
 plot_raster <- function(raster_df,
                         window_start = -0.05,
                         window_end = 0.20){
