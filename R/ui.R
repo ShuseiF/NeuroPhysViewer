@@ -1,6 +1,3 @@
-library(shiny)
-library(plotly)
-
 ui <- fluidPage(
   
   titlePanel("NeuroPhysViewer"),
@@ -10,19 +7,24 @@ ui <- fluidPage(
     sidebarPanel(
       
       fileInput(
-        "file",
-        "Load txt file",
-        accept = c(".txt", ".csv")
+        inputId = "file",
+        label = "LabChart TXT file",
+        accept = c(".txt")
       )
       
     ),
     
     mainPanel(
       
-      plotlyOutput("wavePlot", height = "700px")
+      plotly::plotlyOutput(
+        outputId = "plot",
+        height = "700px"
+      ),
+      
+      h3("TTL Detection"),
+      
+      tableOutput("ttl_table")
       
     )
-    
   )
-  
 )
