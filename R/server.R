@@ -1,20 +1,14 @@
 server <- function(input, output, session){
   
   file_data <- reactive({
-    
     req(input$file)
     
     x <- read_labchart_txt(input$file$datapath)
-    
     dat <- x$waveform
     
-    ttl <- detect_ttl(
-      time = dat$Time,
-      ttl  = dat$MT
-    )
+    ttl <- detect_ttl(time = dat$Time, ttl = dat$MT)
     
     ttl_display <- ttl[, c("Stim", "Onset", "Offset", "Width_ms")]
-    
     ttl_display$Onset <- round(ttl_display$Onset, 4)
     ttl_display$Offset <- round(ttl_display$Offset, 4)
     ttl_display$Width_ms <- round(ttl_display$Width_ms, 3)
@@ -27,7 +21,6 @@ server <- function(input, output, session){
   })
   
   spike_data <- reactive({
-    
     x <- file_data()
     
     detect_spikes(
@@ -39,7 +32,6 @@ server <- function(input, output, session){
   })
   
   raster_data <- reactive({
-    
     x <- file_data()
     spikes <- spike_data()
     
@@ -51,8 +43,20 @@ server <- function(input, output, session){
     )
   })
   
-  output$plot <- plotly::renderPlotly({
+  psth_data <- reactive({
+    x <- file_data()
+    raster <- raster_data()
     
+    make_psth_data(
+      raster_df = raster,
+      window_start = input$raster_start,
+      window_end = input$raster_end,
+      bin_width = input$psth_bin,
+      n_stim = nrow(x$ttl)
+    )
+  })
+  
+  output$plot <- plotly::renderPlotly({
     x <- file_data()
     
     plot_waveform(
@@ -63,18 +67,22 @@ server <- function(input, output, session){
   })
   
   output$raster_plot <- plotly::renderPlotly({
-    
-    raster <- raster_data()
-    
     plot_raster(
-      raster_df = raster,
+      raster_df = raster_data(),
+      window_start = input$raster_start,
+      window_end = input$raster_end
+    )
+  })
+  
+  output$psth_plot <- plotly::renderPlotly({
+    plot_psth(
+      psth_df = psth_data(),
       window_start = input$raster_start,
       window_end = input$raster_end
     )
   })
   
   output$ttl_table <- DT::renderDataTable({
-    
     x <- file_data()
     
     DT::datatable(

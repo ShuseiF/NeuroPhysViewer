@@ -1,6 +1,6 @@
 ui <- fluidPage(
   
-  titlePanel("NeuroPhysViewer v0.5.3"),
+  titlePanel("NeuroPhysViewer v0.6"),
   
   sidebarLayout(
     
@@ -40,7 +40,7 @@ ui <- fluidPage(
       
       hr(),
       
-      h4("Raster Window"),
+      h4("Analysis Window"),
       
       numericInput(
         inputId = "raster_start",
@@ -54,25 +54,29 @@ ui <- fluidPage(
         label = "End time (s)",
         value = 0.20,
         step = 0.01
+      ),
+      
+      numericInput(
+        inputId = "psth_bin",
+        label = "PSTH bin width (s)",
+        value = 0.005,
+        min = 0.001,
+        max = 0.1,
+        step = 0.001
       )
     ),
     
     mainPanel(
       
-      plotly::plotlyOutput(
-        outputId = "plot",
-        height = "650px"
-      ),
+      plotly::plotlyOutput("plot", height = "600px"),
       
       h3("Raster Plot"),
+      plotly::plotlyOutput("raster_plot", height = "350px"),
       
-      plotly::plotlyOutput(
-        outputId = "raster_plot",
-        height = "400px"
-      ),
+      h3("PSTH"),
+      plotly::plotlyOutput("psth_plot", height = "300px"),
       
       h3("TTL Detection"),
-      
       DT::dataTableOutput("ttl_table")
     )
   )
