@@ -1,6 +1,6 @@
 ui <- fluidPage(
   
-  titlePanel("NeuroPhysViewer v0.5"),
+  titlePanel("NeuroPhysViewer v0.5.3"),
   
   sidebarLayout(
     
@@ -25,8 +25,10 @@ ui <- fluidPage(
       numericInput(
         inputId = "spike_threshold",
         label = "Spike threshold",
-        value = -0.5,
-        step = 0.1
+        value = -0.50,
+        min = -100,
+        max = 100,
+        step = 0.01
       ),
       
       selectInput(

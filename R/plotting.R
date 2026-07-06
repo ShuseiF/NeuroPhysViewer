@@ -127,14 +127,26 @@ plot_raster <- function(raster_df,
     )
   }
   
+  raster_lines <- data.frame(
+    x = rep(raster_df$Time, each = 3),
+    y = as.vector(
+      rbind(
+        raster_df$Stim - 0.35,
+        raster_df$Stim + 0.35,
+        NA
+      )
+    )
+  )
+  
   plot_ly(
-    raster_df,
-    x = ~Time,
-    y = ~Stim,
-    type = "scattergl",
-    mode = "markers",
-    marker = list(size = 5),
-    name = "Spike"
+    raster_lines,
+    x = ~x,
+    y = ~y,
+    type = "scatter",
+    mode = "lines",
+    line = list(width = 1),
+    hoverinfo = "none",
+    showlegend = FALSE
   ) |>
     add_segments(
       x = 0,
