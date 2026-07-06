@@ -1,6 +1,6 @@
 ui <- fluidPage(
   
-  titlePanel("NeuroPhysViewer v0.3"),
+  titlePanel("NeuroPhysViewer v0.4"),
   
   sidebarLayout(
     
@@ -10,8 +10,13 @@ ui <- fluidPage(
         inputId = "file",
         label = "LabChart TXT file",
         accept = c(".txt")
-      )
+      ),
       
+      checkboxInput(
+        inputId = "show_ttl",
+        label = "Show TTL",
+        value = TRUE
+      )
     ),
     
     mainPanel(
@@ -24,7 +29,6 @@ ui <- fluidPage(
       h3("TTL Detection"),
       
       DT::dataTableOutput("ttl_table")
-      
     )
   )
 )

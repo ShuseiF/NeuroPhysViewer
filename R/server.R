@@ -30,7 +30,11 @@ server <- function(input, output, session){
     
     x <- file_data()
     
-    plot_waveform(x$waveform)
+    plot_waveform(
+      df = x$waveform,
+      ttl = x$ttl,
+      show_ttl = input$show_ttl
+    )
   })
   
   output$ttl_table <- DT::renderDataTable({
