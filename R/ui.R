@@ -1,6 +1,6 @@
 ui <- fluidPage(
   
-  titlePanel("NeuroPhysViewer v0.4"),
+  titlePanel("NeuroPhysViewer v0.5"),
   
   sidebarLayout(
     
@@ -16,6 +16,42 @@ ui <- fluidPage(
         inputId = "show_ttl",
         label = "Show TTL",
         value = TRUE
+      ),
+      
+      hr(),
+      
+      h4("Spike Detection"),
+      
+      numericInput(
+        inputId = "spike_threshold",
+        label = "Spike threshold",
+        value = -0.5,
+        step = 0.1
+      ),
+      
+      selectInput(
+        inputId = "spike_polarity",
+        label = "Spike polarity",
+        choices = c("negative", "positive"),
+        selected = "negative"
+      ),
+      
+      hr(),
+      
+      h4("Raster Window"),
+      
+      numericInput(
+        inputId = "raster_start",
+        label = "Start time (s)",
+        value = -0.05,
+        step = 0.01
+      ),
+      
+      numericInput(
+        inputId = "raster_end",
+        label = "End time (s)",
+        value = 0.20,
+        step = 0.01
       )
     ),
     
@@ -23,7 +59,14 @@ ui <- fluidPage(
       
       plotly::plotlyOutput(
         outputId = "plot",
-        height = "700px"
+        height = "650px"
+      ),
+      
+      h3("Raster Plot"),
+      
+      plotly::plotlyOutput(
+        outputId = "raster_plot",
+        height = "400px"
       ),
       
       h3("TTL Detection"),

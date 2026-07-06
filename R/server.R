@@ -26,6 +26,31 @@ server <- function(input, output, session){
     )
   })
   
+  spike_data <- reactive({
+    
+    x <- file_data()
+    
+    detect_spikes(
+      time = x$waveform$Time,
+      signal = x$waveform$Unit,
+      threshold = input$spike_threshold,
+      polarity = input$spike_polarity
+    )
+  })
+  
+  raster_data <- reactive({
+    
+    x <- file_data()
+    spikes <- spike_data()
+    
+    make_raster_data(
+      spikes = spikes,
+      ttl = x$ttl,
+      window_start = input$raster_start,
+      window_end = input$raster_end
+    )
+  })
+  
   output$plot <- plotly::renderPlotly({
     
     x <- file_data()
@@ -34,6 +59,17 @@ server <- function(input, output, session){
       df = x$waveform,
       ttl = x$ttl,
       show_ttl = input$show_ttl
+    )
+  })
+  
+  output$raster_plot <- plotly::renderPlotly({
+    
+    raster <- raster_data()
+    
+    plot_raster(
+      raster_df = raster,
+      window_start = input$raster_start,
+      window_end = input$raster_end
     )
   })
   

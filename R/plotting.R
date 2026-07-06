@@ -110,3 +110,50 @@ plot_waveform <- function(df,
     xaxis3 = list(title = "Time (s)")
   )
 }
+
+plot_raster <- function(raster_df,
+                        window_start = -0.05,
+                        window_end = 0.20){
+  
+  if(is.null(raster_df) || nrow(raster_df) == 0){
+    
+    return(
+      plot_ly() |>
+        layout(
+          title = "No spikes detected in raster window",
+          xaxis = list(title = "Time from TTL onset (s)"),
+          yaxis = list(title = "Stimulus #")
+        )
+    )
+  }
+  
+  plot_ly(
+    raster_df,
+    x = ~Time,
+    y = ~Stim,
+    type = "scattergl",
+    mode = "markers",
+    marker = list(size = 5),
+    name = "Spike"
+  ) |>
+    add_segments(
+      x = 0,
+      xend = 0,
+      y = 0,
+      yend = max(raster_df$Stim, na.rm = TRUE) + 1,
+      inherit = FALSE,
+      line = list(color = "red", width = 1),
+      showlegend = FALSE
+    ) |>
+    layout(
+      showlegend = FALSE,
+      xaxis = list(
+        title = "Time from TTL onset (s)",
+        range = c(window_start, window_end)
+      ),
+      yaxis = list(
+        title = "Stimulus #",
+        autorange = "reversed"
+      )
+    )
+}
