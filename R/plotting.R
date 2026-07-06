@@ -103,7 +103,6 @@ plot_review_window <- function(df,
                                show_spikes = TRUE){
   
   review_end <- review_start + review_width_ms / 1000
-  
   idx <- which(df$Time >= review_start & df$Time <= review_end)
   
   if(length(idx) == 0){
@@ -230,7 +229,81 @@ plot_review_window <- function(df,
       )
     )
 }
+
+plot_spike_overlay <- function(waveforms,
+                               mean_waveform){
   
+  if(is.null(waveforms) || nrow(waveforms) == 0){
+    return(
+      plot_ly() |>
+        layout(
+          title = "No spike waveforms",
+          xaxis = list(title = "Time from spike peak (ms)"),
+          yaxis = list(title = "Voltage")
+        )
+    )
+  }
+  
+  waveform_lines <- data.frame(
+    Time_ms = c(),
+    Voltage = c()
+  )
+  
+  ids <- unique(waveforms$SpikeID)
+  
+  for(id in ids){
+    w <- waveforms[waveforms$SpikeID == id, , drop = FALSE]
+    
+    waveform_lines <- rbind(
+      waveform_lines,
+      data.frame(
+        Time_ms = c(w$Time_ms, NA),
+        Voltage = c(w$Voltage, NA)
+      )
+    )
+  }
+  
+  p <- plot_ly(
+    waveform_lines,
+    x = ~Time_ms,
+    y = ~Voltage,
+    type = "scatter",
+    mode = "lines",
+    line = list(width = 0.5),
+    opacity = 0.25,
+    hoverinfo = "none",
+    showlegend = FALSE
+  )
+  
+  if(!is.null(mean_waveform) && nrow(mean_waveform) > 0){
+    p <- p |>
+      add_lines(
+        data = mean_waveform,
+        x = ~Time_ms,
+        y = ~Voltage,
+        inherit = FALSE,
+        line = list(width = 3),
+        showlegend = FALSE
+      )
+  }
+  
+  p |>
+    add_segments(
+      x = 0,
+      xend = 0,
+      y = min(waveforms$Voltage, na.rm = TRUE),
+      yend = max(waveforms$Voltage, na.rm = TRUE),
+      inherit = FALSE,
+      line = list(color = "red", width = 1, dash = "dot"),
+      showlegend = FALSE
+    ) |>
+    layout(
+      showlegend = FALSE,
+      xaxis = list(title = "Time from spike peak (ms)"),
+      yaxis = list(title = "Voltage")
+    )
+}
+
 plot_raster <- function(raster_df,
                         window_start = -0.05,
                         window_end = 0.20){

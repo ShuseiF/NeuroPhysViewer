@@ -42,11 +42,8 @@ server <- function(input, output, session){
     
     start_time <- max(min(x$waveform$Time, na.rm = TRUE), start_time)
     
-    updateNumericInput(
-      session,
-      "review_start",
-      value = round(start_time, 4)
-    )
+    updateNumericInput(session, "review_start", value = round(start_time, 4))
+    
   }, once = TRUE)
   
   spike_data <- reactive({
@@ -58,6 +55,24 @@ server <- function(input, output, session){
       threshold = input$spike_threshold,
       polarity = input$spike_polarity
     )
+  })
+  
+  spike_waveform_data <- reactive({
+    x <- file_data()
+    spikes <- spike_data()
+    
+    make_spike_waveforms(
+      time = x$waveform$Time,
+      signal = x$waveform$Unit,
+      spikes = spikes,
+      pre_ms = input$spike_pre_ms,
+      post_ms = input$spike_post_ms,
+      max_spikes = input$overlay_max_spikes
+    )
+  })
+  
+  mean_spike_waveform_data <- reactive({
+    make_mean_waveform(spike_waveform_data())
   })
   
   raster_data <- reactive({
@@ -111,6 +126,13 @@ server <- function(input, output, session){
       review_width_ms = input$review_width,
       show_ttl = input$show_ttl,
       show_spikes = input$show_spikes
+    )
+  })
+  
+  output$spike_overlay_plot <- plotly::renderPlotly({
+    plot_spike_overlay(
+      waveforms = spike_waveform_data(),
+      mean_waveform = mean_spike_waveform_data()
     )
   })
   

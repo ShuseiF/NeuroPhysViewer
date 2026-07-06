@@ -49,17 +49,85 @@ detect_spikes <- function(time,
   )
 }
 
-make_raster_data <- function(spikes, ttl, window_start = -0.05, window_end = 0.20){
+make_spike_waveforms <- function(time,
+                                 signal,
+                                 spikes,
+                                 pre_ms = 2,
+                                 post_ms = 3,
+                                 max_spikes = 300){
+  
+  if(is.null(spikes) || nrow(spikes) == 0){
+    return(data.frame())
+  }
+  
+  if(nrow(spikes) > max_spikes){
+    idx_use <- round(seq(1, nrow(spikes), length.out = max_spikes))
+    spikes <- spikes[idx_use, , drop = FALSE]
+  }
+  
+  dt <- median(diff(time), na.rm = TRUE)
+  pre_n <- round((pre_ms / 1000) / dt)
+  post_n <- round((post_ms / 1000) / dt)
+  
+  rel_time <- (-pre_n:post_n) * dt * 1000
+  
+  out <- list()
+  
+  for(i in seq_len(nrow(spikes))){
+    
+    idx <- spikes$SpikeIndex[i]
+    i1 <- idx - pre_n
+    i2 <- idx + post_n
+    
+    if(i1 < 1 || i2 > length(signal)){
+      next
+    }
+    
+    out[[length(out) + 1]] <- data.frame(
+      SpikeID = i,
+      Time_ms = rel_time,
+      Voltage = signal[i1:i2]
+    )
+  }
+  
+  if(length(out) == 0){
+    return(data.frame())
+  }
+  
+  do.call(rbind, out)
+}
+
+make_mean_waveform <- function(waveforms){
+  
+  if(is.null(waveforms) || nrow(waveforms) == 0){
+    return(data.frame())
+  }
+  
+  aggregate(
+    Voltage ~ Time_ms,
+    data = waveforms,
+    FUN = mean
+  )
+}
+
+make_raster_data <- function(spikes,
+                             ttl,
+                             window_start = -0.05,
+                             window_end = 0.20){
   
   out <- list()
   
   for(i in seq_len(nrow(ttl))){
+    
     t0 <- ttl$Onset[i]
     s <- spikes$SpikeTime - t0
     s <- s[s >= window_start & s <= window_end]
     
     if(length(s) > 0){
-      out[[i]] <- data.frame(Stim = i, Time = s)
+      out[[i]] <- data.frame(
+        Stim = i,
+        Time = s
+      )
     }
   }
   

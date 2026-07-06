@@ -7,16 +7,7 @@ read_labchart_txt <- function(file){
   
   lines <- readLines(file, encoding = "unknown")
   
-  ## -----------------------------
-  ## Metadata (最初の6行)
-  ## -----------------------------
-  
   metadata <- lines[1:6]
-  
-  ## -----------------------------
-  ## Data
-  ## -----------------------------
-  
   dat_lines <- lines[-(1:6)]
   
   n <- length(dat_lines)
@@ -46,54 +37,38 @@ read_labchart_txt <- function(file){
     if(length(x) >= 5){
       
       labels[[k]] <- data.frame(
-        
         Time = Time[j],
         Label = paste(x[5:length(x)], collapse = " "),
-        
         stringsAsFactors = FALSE
-        
       )
       
       k <- k + 1
-      
     }
     
     j <- j + 1
-    
   }
   
   waveform <- data.frame(
-    
     Time = Time[1:(j-1)],
     Unit = Unit[1:(j-1)],
     MT   = MT[1:(j-1)],
     TTL  = TTL[1:(j-1)]
-    
   )
   
   labels <- labels[1:(k-1)]
   
-  if(length(labels)>0){
-    
+  if(length(labels) > 0){
     labels <- do.call(rbind, labels)
-    
-  }else{
-    
+  } else {
     labels <- data.frame(
-      Time=numeric(0),
-      Label=character(0)
+      Time = numeric(0),
+      Label = character(0)
     )
-    
   }
   
   list(
-    
     metadata = metadata,
-    
     waveform = waveform,
-    
     labels = labels
-    
   )
-  
 }
