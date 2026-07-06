@@ -1,6 +1,6 @@
 ui <- fluidPage(
   
-  titlePanel("NeuroPhysViewer"),
+  titlePanel("NeuroPhysViewer v0.3"),
   
   sidebarLayout(
     
@@ -23,7 +23,7 @@ ui <- fluidPage(
       
       h3("TTL Detection"),
       
-      tableOutput("ttl_table")
+      DT::dataTableOutput("ttl_table")
       
     )
   )

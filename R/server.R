@@ -1,6 +1,6 @@
 server <- function(input, output, session){
   
-  raw_data <- reactive({
+  file_data <- reactive({
     
     req(input$file)
     
@@ -8,43 +8,43 @@ server <- function(input, output, session){
     
     dat <- x$waveform
     
-    dat
-  })
-  
-  ttl_data <- reactive({
-    
-    dat <- raw_data()
-    
-    detect_ttl(
+    ttl <- detect_ttl(
       time = dat$Time,
       ttl  = dat$MT
     )
-  })
-  
-  ttl_table_display <- reactive({
     
-    ttl <- ttl_data()
+    ttl_display <- ttl[, c("Stim", "Onset", "Offset", "Width_ms")]
     
-    ttl <- ttl[, c("Stim", "Onset", "Offset", "Width_ms")]
+    ttl_display$Onset <- round(ttl_display$Onset, 4)
+    ttl_display$Offset <- round(ttl_display$Offset, 4)
+    ttl_display$Width_ms <- round(ttl_display$Width_ms, 3)
     
-    ttl$Onset <- round(ttl$Onset, 4)
-    ttl$Offset <- round(ttl$Offset, 4)
-    ttl$Width_ms <- round(ttl$Width_ms, 3)
-    
-    head(ttl, 30)
+    list(
+      waveform = dat,
+      ttl = ttl,
+      ttl_display = ttl_display
+    )
   })
   
   output$plot <- plotly::renderPlotly({
     
-    dat <- raw_data()
+    x <- file_data()
     
-    plot_waveform(dat)
+    plot_waveform(x$waveform)
   })
   
-  output$ttl_table <- renderTable({
+  output$ttl_table <- DT::renderDataTable({
     
-    ttl_table_display()
+    x <- file_data()
     
+    DT::datatable(
+      x$ttl_display,
+      options = list(
+        pageLength = 20,
+        lengthMenu = c(10, 20, 50, 100),
+        searching = FALSE
+      ),
+      rownames = FALSE
+    )
   })
-  
 }
